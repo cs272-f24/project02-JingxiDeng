@@ -26,16 +26,30 @@ func IsValidHTTPSURL(hostname string) bool {
 	return true
 }
 
-func containsInvalidURLChars(url string) bool {
-	safeChars := "-._~:/?#[]@!$&'()*+,;="
+var safeCharsSet = func() map[rune]struct{} {
+	safeChars := "%-._~:/?#[]@!$&'()*+,;=| "
+	set := make(map[rune]struct{})
+	for _, char := range safeChars {
+		set[char] = struct{}{}
+	}
+	return set
+}()
 
+// containsInvalidURLChars checks if a URL contains any invalid characters
+func containsInvalidURLChars(url string) bool {
 	for _, currentChar := range url {
-		if !unicode.IsLetter(currentChar) && !unicode.IsNumber(currentChar) && !strings.ContainsRune(safeChars, currentChar) {
+		// Check if the character is not a letter, not a number, and not in the safeCharsSet
+		if !unicode.IsLetter(currentChar) && !unicode.IsNumber(currentChar) && !isSafeChar(currentChar) {
 			return true
 		}
 	}
-
 	return false
+}
+
+// Helper function to check if a character is in the safeCharsSet
+func isSafeChar(char rune) bool {
+	_, exists := safeCharsSet[char]
+	return exists
 }
 
 /*
@@ -84,6 +98,11 @@ func Clean(host string, hrefs []string) []string {
 			continue
 		}
 
+		baseHostOnly := &url.URL{
+			Scheme: base.Scheme,
+			Host:   base.Host,
+		}
+
 		// Parse href
 		hrefURL, err := url.Parse(href)
 		if err != nil {
@@ -100,13 +119,11 @@ func Clean(host string, hrefs []string) []string {
 			}
 			continue
 		}
-
+		
 		// if the href is a partial url, match it with the host
-		mergedURL := base.ResolveReference(hrefURL)
-
+		mergedURL := baseHostOnly.ResolveReference(hrefURL)
 		// add the resolved, cleaned URL to the list
 		parsedUrls = append(parsedUrls, mergedURL.String())
-		
 	}
 
 	return parsedUrls

@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	//"reflect"
-	"slices"
 	"strings"
 	"testing"
 )
@@ -64,26 +62,20 @@ func TestCrawl(t *testing.T){
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Trim leading '/' from r.URL.Path
 				filePath := strings.TrimPrefix(r.URL.Path, "/")
-				
 				// Check if the file is in the expected list
-				if slices.Contains(test.expected, filePath) {
-					file, err := os.Open(filePath)
-					if err != nil {
-						t.Errorf("ERROR: %s is not a valid file path\n", filePath)
-						return
-					}
-					defer file.Close()
-			
-					fileContent, err := io.ReadAll(file)
-					if err != nil {
-						t.Errorf("Error reading file: %v\n", err)
-						return
-					}
-					w.Write(fileContent)
-				} else {
-					// Handle requests for files not in the expected list
-					http.NotFound(w, r)
+				file, err := os.Open(filePath)
+				if err != nil {
+					t.Errorf("ERROR: %s is not a valid file path\n", filePath)
+					return
 				}
+				defer file.Close()
+		
+				fileContent, err := io.ReadAll(file)
+				if err != nil {
+					t.Errorf("Error reading file: %v\n", err)
+					return
+				}
+				w.Write(fileContent)
 			})
 
 			server := httptest.NewServer(handler)

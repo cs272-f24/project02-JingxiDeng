@@ -1,12 +1,50 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
-
 	"github.com/kljensen/snowball"
 )
+/*
+    This function updates the inverted index by inserting newly found words into the inverted index data structure
+*/
+func updateInvertedIndex(invertedIndex map[string]map[string]int, words []string, currentURL string) {
+	// Add the extracted words into the inverted index
+    for _, word := range words {
+        // stem the word
+        word, err := snowball.Stem(word, "english", true)
+        if err != nil {
+            fmt.Println(err)
+            continue
+        }
+        urlMap, exists := invertedIndex[word]
+        // If the word does not exist in the inverted index map, 
+        // make a new hashmap and add it to the inverted index with the word as the new map's key
+        if !exists {
+            urlMap = make(map[string]int)
+            invertedIndex[word] = urlMap
+        }
+        // Increment the frequency of the current word in the current URL by 1. 
+        // The one-liner below works because if the current URL doesn't exist as a key, 
+        // it automatically makes a new entry into the hashmap
+        urlMap[currentURL]++
+    }
+}
+
+/*
+    This function adds new, unvisited, and valid URL or file paths to the queue
+*/
+func addNewURLsToQueue(hrefs []string, currentURL string, visited map[string]struct{}, queue *[]string, queueSet *map[string]struct{}) {
+	cleanedHrefs := Clean(currentURL, hrefs)
+	for _, href := range cleanedHrefs {
+		if _, seen := visited[href]; !seen && href != "INVALID HREF" {
+			if _, inQueue := (*queueSet)[href]; !inQueue {
+				*queue = append(*queue, href)
+				(*queueSet)[href] = struct{}{}
+			}
+		}
+	}
+}
 
 /*
 	Crawl(): Given a seed URL, if the URL is a link and not a file path, then download the webpage,
@@ -48,45 +86,17 @@ func Crawl(seed string) (map[string]map[string]int, []string, error) {
         visited[currentURL] = struct{}{}
         extracted, err := Download(currentURL)
         if err != nil {
-            fmt.Println("Current URL: " + currentURL)
-            return invertedIndex, nil, errors.New("ERROR WITH DOWNLOAD(), SCANPAGE() TERMINATED")
+            return invertedIndex, nil, err
         }
         words, hrefs, err := Extract(extracted)
         if err != nil {
-            return invertedIndex, nil, errors.New("ERROR WITH EXTRACT(), SCANPAGE() TERMINATED")
+            return invertedIndex, nil, err
         }
         hrefs = Clean(currentURL, hrefs)
 
-        // Add the extracted words into the inverted index
-        for _, word := range words {
-            // stem the word
-            word, err = snowball.Stem(word, "english", true)
-            if err != nil {
-                fmt.Println(err)
-                continue
-            }
-            urlMap, exists := invertedIndex[word]
-            // If the word does not exist in the inverted index map, 
-            // make a new hashmap and add it to the inverted index with the word as the new map's key
-            if !exists {
-                urlMap = make(map[string]int)
-                invertedIndex[word] = urlMap
-            }
-            // Increment the frequency of the current word in the current URL by 1. 
-            // The one-liner below works because if the current URL doesn't exist as a key, 
-            // it automatically makes a new entry into the hashmap
-            urlMap[currentURL]++
-        }
+        updateInvertedIndex(invertedIndex, words, currentURL)
 
-        // We only add new, unvisited URLs to the queue
-        for _, href := range hrefs {
-            if _, containsHref := visited[href]; !containsHref {
-                if _, inQueue := queueSet[href]; !inQueue && href != "INVALID HREF" {
-                    queue = append(queue, href)
-                    queueSet[href] = struct{}{}
-                }
-            }
-        }
+        addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
     }
 
     // Collect the visited URLs into a slice
@@ -95,5 +105,8 @@ func Crawl(seed string) (map[string]map[string]int, []string, error) {
         visitedURLs = append(visitedURLs, url)
     }
 
+    
     return invertedIndex, visitedURLs, nil
 }
+
+
