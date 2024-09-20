@@ -15,12 +15,12 @@ type StopWords map[string]struct{}
 /*
     Generate a hashset of stop words by reading from a JSON file
 */
-func GenerateStopWords()StopWords{
+func GenerateStopWords()(StopWords, error){
     // Read the Stop words from "stopwords-en.json" and generate a stop word map
     fileContent, err := ioutil.ReadFile("stopwords-en.json")
     if err != nil {
         fmt.Println("Error reading file:", err)
-        return nil
+        return nil, err
     }
 
     var stopwords []string
@@ -28,7 +28,7 @@ func GenerateStopWords()StopWords{
     err = json.Unmarshal(fileContent, &stopwords)
     if err != nil {
         fmt.Println("Error unmarshaling JSON:", err)
-        return nil
+        return nil, err
     }
 
     // make the set
@@ -36,7 +36,7 @@ func GenerateStopWords()StopWords{
     for _, word := range stopwords{
         set[word] = struct{}{}
     }
-    return set
+    return set, nil
 }
 
 /*
@@ -62,7 +62,10 @@ func removeHostname(fullURL string) (string, error) {
    This function updates the inverted index by inserting newly found words into the inverted index data structure
 */
 func updateInvertedIndex(invertedIndex map[string]map[string]int, stopwords StopWords, docWordCount map[string]int, words []string, currentURL string) {
-	// Add the extracted words into the inverted index
+	// record the number of words inside of a particular document
+    docWordCount[currentURL]+=len(words)
+    
+    // Add the extracted words into the inverted index
     for _, word := range words {
         // check if the word is a stop word. If it is a stop word, skip to the next for loop run.
         if Stop(word, stopwords){
@@ -86,10 +89,6 @@ func updateInvertedIndex(invertedIndex map[string]map[string]int, stopwords Stop
         // it automatically makes a new entry into the hashmap
         urlMap[currentURL]++
     }
-
-     // record the number of words inside of a particular document
-
-     docWordCount[currentURL]+=len(words)
 }
 
 /*
@@ -108,7 +107,6 @@ func addNewURLsToQueue(hrefs []string, currentURL string, visited map[string]str
 }
 
 
-
 /*
 	Crawl(): Given a seed URL, if the URL is a link and not a file path, then download the webpage,
 		extract the words and URLs, and add all cleaned URLs found to a download queue and continue to crawl those URLs.
@@ -124,7 +122,10 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
     invertedIndex := make(map[string]map[string]int) // words -> links -> frequency	
     docWordCount := make(map[string]int)
     
-    StopWords := GenerateStopWords()
+    StopWords, err := GenerateStopWords()
+    if(err != nil){
+        return nil, nil, nil, err
+    }
 
     queue := []string{seed}
     // make a hashset for the queue to speed up look-up times
@@ -161,6 +162,7 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
         }
         hrefs = Clean(currentURL, hrefs)
 
+        addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
         // remove the hostname prefix for the current URL
         currentURL, err := removeHostname(currentURL)
         if(err != nil){
@@ -168,7 +170,6 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
         }
         visited[currentURL] = struct{}{}
         updateInvertedIndex(invertedIndex, StopWords, docWordCount, words, currentURL)
-        addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
     }
 
     // Collect the visited URLs into a slice

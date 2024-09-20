@@ -91,7 +91,7 @@ func TestSearch(t *testing.T){
 
 			// check here
 			// adding the mock server's url to the url provided in the test case
-			actual, err := Search(server.URL + "/" + test.seed, test.searchWord)
+			actual, _, err := Search(server.URL + "/" + test.seed, test.searchWord)
 			if err != nil {
 				t.Errorf("ERROR: Search() returned \n%v\n", err)
 			}

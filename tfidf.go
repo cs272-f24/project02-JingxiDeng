@@ -1,24 +1,32 @@
 package main
 
+//import "math"
+
+type DocFrequency struct{
+	filepath string
+	tfidfScore float64
+}
+
 /*
 	Ranks the relavence of the results that come up from the search word
 	TF (Term Frequency) = number of occurances of a word / number of words in a document
-	IDF (Inverse Document Frequency) = number of documents in which search term occurs (Romeo appears in 9000 documents)
+		- TF = frequencyMap[path] / docWordCount[path]
+	IDF (Inverse Document Frequency) = log(number of documents / (number of documents that contain the search term + 1))
 		- If a search word comes up in a small amount of documents, then those documents are more relavent.
 		- IDF = log(number of docs / (docs containing the term + 1))
+		-     = log(numOfDocs / (len(frequencyMap) + 1))
 
-	TF IDF = TF * (1/IDF)
-
-	use float64 (decimal number)
-
-	TF := (float64)termCount / (float64)wordsInDoc
-		- Collect all Term Frequencies and sort them to determine most relavent (largest) score
-	
-		make another map to record how many words are in a doc
-		number of docs = that map's length
-		map[url] = number of words in a doc
-		len(map) = number of docs
+	TF IDF = TF * IDF
 */
-func TfIdf(){
+func TfIdf(searchWord, seed string)(string, error){
+	// frequencyMap, docWordCount, err := Search(seed, searchWord)
+	// if(err != nil){
+	// 	return "", err
+	// }
 
+	// idfScore := math.Log(float64(len(docWordCount)) / float64((len(frequencyMap)+1)))
+
+
+
+	return "", nil
 }

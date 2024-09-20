@@ -14,7 +14,10 @@ func TestStop(t *testing.T){
 	}
 
 	for _, test := range tests{
-		stopwords := GenerateStopWords()
+		stopwords, err := GenerateStopWords()
+		if err != nil{
+			t.Errorf("ERROR %s returned: %s", test.name, err)
+		}
 
 		for _, word := range test.words{
 			if !Stop(word, stopwords){
