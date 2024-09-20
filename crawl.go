@@ -64,7 +64,7 @@ func removeHostname(fullURL string) (string, error) {
 func updateInvertedIndex(invertedIndex map[string]map[string]int, stopwords StopWords, docWordCount map[string]int, words []string, currentURL string) {
 	// record the number of words inside of a particular document
     docWordCount[currentURL]+=len(words)
-    
+
     // Add the extracted words into the inverted index
     for _, word := range words {
         // check if the word is a stop word. If it is a stop word, skip to the next for loop run.
@@ -154,11 +154,13 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
 
         extracted, err := Download(currentURL)
         if err != nil {
-            return invertedIndex, nil, nil, err
+            fmt.Printf("Error downloading URL %s: %v\n", currentURL, err)
+            continue
         }
         words, hrefs, err := Extract(extracted)
         if err != nil {
-            return invertedIndex, nil, nil, err
+            fmt.Printf("Error extracting data from URL %s: %v\n", currentURL, err)
+            continue
         }
         hrefs = Clean(currentURL, hrefs)
 
