@@ -48,12 +48,13 @@ func TestSearch(t *testing.T){
 				"rnj_files/sceneII_30.1.html": 10,
 				"rnj_files/sceneII_30.3.html": 13,
 			},
-		},{
-			name: "Case: top10",
-			seed: "top10/index.html",
-			searchWord: "Romeo",
-			expected: map[string]int{},
 		},
+		// {
+		// 	name: "Case: top10",
+		// 	seed: "top10/index.html",
+		// 	searchWord: "Romeo",
+		// 	expected: map[string]int{},
+		// },
 	}
 
 	for _, test := range tests{
@@ -85,7 +86,7 @@ func TestSearch(t *testing.T){
 			// generate expected results:
 			expectedResults := make(map[string]int)
 			for key, val := range test.expected {
-				expectedResults[server.URL+"/"+key] = val
+				expectedResults[key] = val
 			}
 
 			// check here

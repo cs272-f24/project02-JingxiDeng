@@ -5,7 +5,7 @@ import (
 )
 
 func Search(seed, searchWord string) (map[string]int, error){
-	searchResults, _,  err := Crawl(seed)
+	searchResults, _,  _,  err := Crawl(seed)
 	if err != nil{
 		return nil, err
 	}

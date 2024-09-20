@@ -84,11 +84,11 @@ func TestCrawl(t *testing.T){
 			// generate expected results:
 			expectedURLs := make([]string, len(test.expected))
 			for i, p := range test.expected {
-				expectedURLs[i] = server.URL + "/" + p
+				expectedURLs[i] = p
 			}
 
 			// adding the mock server's url to the url provided in the test case
-			_, actual, err := Crawl(server.URL + "/" + test.seed)
+			_, _, actual, err := Crawl(server.URL + "/" + test.seed)
 			if err != nil {
 				t.Errorf("ERROR: Crawl() returned %v\n", err)
 			}

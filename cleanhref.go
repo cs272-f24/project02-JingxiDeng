@@ -92,6 +92,9 @@ func Clean(host string, hrefs []string) []string {
 	}
 
 	for _, href := range hrefs {
+		if href == "INVALID HREF"{
+			continue
+		}
 		// check if the URL contains invalid characters
 		if containsInvalidURLChars(href){
 			parsedUrls = append(parsedUrls, "INVALID HREF")

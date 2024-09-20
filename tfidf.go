@@ -14,7 +14,7 @@ package main
 	TF := (float64)termCount / (float64)wordsInDoc
 		- Collect all Term Frequencies and sort them to determine most relavent (largest) score
 	
-		make anotehr map to record how many words are in a doc
+		make another map to record how many words are in a doc
 		number of docs = that map's length
 		map[url] = number of words in a doc
 		len(map) = number of docs

@@ -7,6 +7,5 @@ package main
 */
 func Stop(searchWord string, set map[string]struct{}) bool{
 	_, exists := set[searchWord]
-
 	return exists;
 }
