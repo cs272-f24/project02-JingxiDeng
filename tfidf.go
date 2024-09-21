@@ -45,7 +45,12 @@ func TfIdf(searchWord, seed string)(string, error){
 
 	// sort the results in descending order by tfidfScore
 	sort.Slice(results, func(i, j int)bool{
-		return results[i].tfidfScore > results[j].tfidfScore
+		if(results[i].tfidfScore != results[j].tfidfScore){
+			return results[i].tfidfScore > results[j].tfidfScore
+		}
+		// if two Result(s) have the same tfidfScore, then compare by filepath name sorted in ascending order.
+		// e.g: sceneII_30.0.html will be more relevant than sceneII_30.1.html
+		return results[i].filepath < results[j].filepath
 	})
 	fmt.Printf("Most relevant result for %s is: %s, with a TfIdf score of: %.4f\n", searchWord, results[0].filepath, results[0].tfidfScore)
 	return results[0].filepath, nil

@@ -17,7 +17,7 @@ func TestTfIdf(t *testing.T){
 			name: "Searching for Romeo",
 			searchWord: "Romeo",
 			seed: "top10/index.html",
-			expected: "top10/The Project Gutenberg eBook of Romeo and Juliet, by William Shakespeare/sceneII_30.1.html",
+			expected: "top10/The Project Gutenberg eBook of Romeo and Juliet, by William Shakespeare/sceneII_30.0.html",
 		},
 	}
 
