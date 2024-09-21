@@ -14,15 +14,17 @@ func TestStop(t *testing.T){
 	}
 
 	for _, test := range tests{
-		stopwords, err := GenerateStopWords()
-		if err != nil{
-			t.Errorf("ERROR %s returned: %s", test.name, err)
-		}
-
-		for _, word := range test.words{
-			if !Stop(word, stopwords){
-				t.Errorf("ERROR: %s is cited as not a stop word when it is a stop word.", word)
+		t.Run(test.name, func(t *testing.T) {
+			stopwords, err := GenerateStopWords()
+			if err != nil{
+				t.Errorf("ERROR %s returned: %s\n", test.name, err)
 			}
-		}
+
+			for _, word := range test.words{
+				if !Stop(word, stopwords){
+					t.Errorf("ERROR: %s is cited as not a stop word when it is a stop word.\n", word)
+				}
+			}
+		})
 	}
 }

@@ -1,8 +1,12 @@
 package main
 
-//import "math"
+import (
+	"fmt"
+	"math"
+	"sort"
+)
 
-type DocFrequency struct{
+type Result struct{
 	filepath string
 	tfidfScore float64
 }
@@ -19,14 +23,30 @@ type DocFrequency struct{
 	TF IDF = TF * IDF
 */
 func TfIdf(searchWord, seed string)(string, error){
-	// frequencyMap, docWordCount, err := Search(seed, searchWord)
-	// if(err != nil){
-	// 	return "", err
-	// }
+	frequencyMap, docWordCount, err := Search(seed, searchWord)
+	if(err != nil){
+		return "", err
+	}
+	if len(frequencyMap) == 0{
+		return "", nil
+	}
 
-	// idfScore := math.Log(float64(len(docWordCount)) / float64((len(frequencyMap)+1)))
+	// calculate the IDF score
+	idfScore := math.Log(float64(len(docWordCount)) / float64((len(frequencyMap)+1)))
 
+	var results []Result
 
+	for key, val := range frequencyMap{
+		tfScore := float64(val) / float64(docWordCount[key])
 
-	return "", nil
+		// make a new Result struct that contains the file path and its TFIDF score
+		results = append(results, Result{filepath: key, tfidfScore: (tfScore * idfScore)})
+	}
+
+	// sort the results in descending order by tfidfScore
+	sort.Slice(results, func(i, j int)bool{
+		return results[i].tfidfScore > results[j].tfidfScore
+	})
+	fmt.Printf("Most relevant result for %s is: %s, with a TfIdf score of: %.4f\n", searchWord, results[0].filepath, results[0].tfidfScore)
+	return results[0].filepath, nil
 }
