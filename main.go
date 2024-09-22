@@ -2,30 +2,33 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"net/http"
+	"net/url"
+	"path"
 )
 
-
-func directoryExists(path string) bool {
-    info, err := os.Stat(path)
-    if os.IsNotExist(err) {
-        return false
-    }
-    return info.IsDir()
-}
-
-// wget -r -np -nH --cut-dirs=1 https://cs272-f24.github.io/top10         
 func main(){
-	// searchResults, err := Search(os.Args[1], os.Args[2])
-	// if(err != nil){
-	// 	fmt.Println(err)
-	// }
-	// fmt.Println(searchResults)
+	// I can serve a file as html content
+	http.Handle("/", http.FileServer(http.Dir("static")))
+	// I can serve a function as html server content
+	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request){
+		searchTerm := r.URL.Query().Get("searchword")
+		server := MockServerHandler()
+		defer server.Close()
 
-	_, err := os.Open(os.Args[1])
-	if err != nil{
-		fmt.Println("Not found")
-	}else{
-		fmt.Println("Found")
-	}
+		// find the search result
+		actual, err := TfIdf(searchTerm, server.URL + path.Join("/", "top10/index.html"))
+		if err != nil{
+			fmt.Println("ERROR with search")
+		}
+		// Un-decode the actual URL
+		actual, err = url.PathUnescape(actual)
+		if err != nil {
+			fmt.Printf("ERROR: Failed to decode actual result: %v\n", err)
+		}
+
+		// display the search result
+		w.Write([]byte("Most relevant document is: " + actual))
+	})
+	http.ListenAndServe(":8080", nil)
 }
