@@ -140,8 +140,12 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
         queue = queue[1:]
         delete(queueSet, currentURL)
 
+        if currentURL == ""{
+            continue
+        }
+
         parsedURL, err := url.Parse(currentURL)
-        if err != nil {
+        if err != nil{
             fmt.Printf("Skipping invalid URL: %s\n", currentURL)
             continue
         }
@@ -163,7 +167,7 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
             continue
         }
         hrefs = Clean(currentURL, hrefs)
-
+       
         addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
         // remove the hostname prefix for the current URL
         currentURL, err := removeHostname(currentURL)
@@ -179,7 +183,6 @@ func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, er
     for url := range visited {
         visitedURLs = append(visitedURLs, url)
     }
-
     return invertedIndex, docWordCount, visitedURLs, nil
 }
 

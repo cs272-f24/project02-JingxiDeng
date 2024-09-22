@@ -26,6 +26,7 @@ func MockServerHandler() *httptest.Server {
 			http.Error(w, "Error reading file", http.StatusInternalServerError)
 			return
 		}
+		
 		w.Write(fileContent)
 	})
 

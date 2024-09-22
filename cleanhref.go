@@ -26,30 +26,14 @@ func IsValidHTTPSURL(hostname string) bool {
 	return true
 }
 
-var safeCharsSet = func() map[rune]struct{} {
-	safeChars := "%-._~:/?#[]@!$&'()*+,;=| "
-	set := make(map[rune]struct{})
-	for _, char := range safeChars {
-		set[char] = struct{}{}
-	}
-	return set
-}()
-
 // containsInvalidURLChars checks if a URL contains any invalid characters
 func containsInvalidURLChars(url string) bool {
-	for _, currentChar := range url {
-		// Check if the character is not a letter, not a number, and not in the safeCharsSet
-		if !unicode.IsLetter(currentChar) && !unicode.IsNumber(currentChar) && !isSafeChar(currentChar) {
-			return true
-		}
-	}
-	return false
-}
-
-// Helper function to check if a character is in the safeCharsSet
-func isSafeChar(char rune) bool {
-	_, exists := safeCharsSet[char]
-	return exists
+    for _, currentChar := range url {
+        if !unicode.IsPrint(currentChar) {
+            return true
+        }
+    }
+    return false
 }
 
 /*

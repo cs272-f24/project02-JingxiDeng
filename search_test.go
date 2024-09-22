@@ -1,12 +1,12 @@
 package main
 
 import (
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"os"
+	// "io"
+	// "net/http"
+	// "net/http/httptest"
+	// "os"
 	"reflect"
-	"strings"
+	//"strings"
 	"testing"
 )
 
@@ -49,38 +49,11 @@ func TestSearch(t *testing.T){
 				"rnj_files/sceneII_30.3.html": 13,
 			},
 		},
-		// {
-		// 	name: "Case: top10",
-		// 	seed: "top10/index.html",
-		// 	searchWord: "Romeo",
-		// 	expected: map[string]int{},
-		// },
 	}
 
 	for _, test := range tests{
 		t.Run(test.name, func(t *testing.T) {
-			// Mock server serving the expected response
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Trim leading '/' from r.URL.Path
-				filePath := strings.TrimPrefix(r.URL.Path, "/")
-				
-				file, err := os.Open(filePath)
-				if err != nil {
-					//t.Errorf("ERROR: %s is not a valid file path\n", filePath)
-					return
-				}
-				defer file.Close()
-		
-				fileContent, err := io.ReadAll(file)
-				if err != nil {
-					t.Errorf("Error reading file: %v\n", err)
-					return
-				}
-				w.Write(fileContent)
-				
-			})
-
-			server := httptest.NewServer(handler)
+			server := MockServerHandler()
 			defer server.Close()
 
 			// generate expected results:

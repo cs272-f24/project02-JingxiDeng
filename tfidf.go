@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"sort"
 )
@@ -52,6 +51,6 @@ func TfIdf(searchWord, seed string)(string, error){
 		// e.g: sceneII_30.0.html will be more relevant than sceneII_30.1.html
 		return results[i].filepath < results[j].filepath
 	})
-	fmt.Printf("Most relevant result for %s is: %s, with a TfIdf score of: %.4f\n", searchWord, results[0].filepath, results[0].tfidfScore)
+
 	return results[0].filepath, nil
 }
