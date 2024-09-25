@@ -20,6 +20,11 @@ type Result struct{
 		-     = log(numOfDocs / (len(frequencyMap) + 1))
 
 	TF IDF = TF * IDF
+
+	@params searchWord is the word that the user typed into the search engine. TfIdf() will find the most relavent document for this searchWord.
+	@params seed is the seed URL that the code will crawl to find search results
+	@returns the file/URL path to the most relavent search result (the document with the highest TF-IDF score with the search term)
+	@returns error for error handling
 */
 func TfIdf(searchWord, seed string)(string, error){
 	frequencyMap, docWordCount, err := Search(seed, searchWord)
@@ -31,7 +36,7 @@ func TfIdf(searchWord, seed string)(string, error){
 	}
 
 	// calculate the IDF score
-	idfScore := math.Log(float64(len(docWordCount)) / float64((len(frequencyMap)+1)))
+	idfScore := math.Log10(float64(len(docWordCount)) / float64((len(frequencyMap)+1)))
 
 	var results []Result
 
