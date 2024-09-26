@@ -13,82 +13,80 @@ import (
 type StopWords map[string]struct{}
 
 /*
-    Generate a hashset of stop words by reading from a JSON file
+   Generate a hashset of stop words by reading from a JSON file
 */
-func GenerateStopWords()(StopWords, error){
-    // Read the Stop words from "stopwords-en.json" and generate a stop word map
-    fileContent, err := ioutil.ReadFile("stopwords-en.json")
-    if err != nil {
-        fmt.Println("Error reading file:", err)
-        return nil, err
-    }
+func GenerateStopWords() (StopWords, error) {
+	// Read the Stop words from "stopwords-en.json" and generate a stop word map
+	fileContent, err := ioutil.ReadFile("stopwords-en.json")
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return nil, err
+	}
 
-    var stopwords []string
+	var stopwords []string
 
-    err = json.Unmarshal(fileContent, &stopwords)
-    if err != nil {
-        fmt.Println("Error unmarshaling JSON:", err)
-        return nil, err
-    }
+	err = json.Unmarshal(fileContent, &stopwords)
+	if err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return nil, err
+	}
 
-    // make the set
-    set := make(StopWords)
-    for _, word := range stopwords{
-        set[word] = struct{}{}
-    }
-    return set, nil
+	// Make the set
+	set := make(StopWords)
+	for _, word := range stopwords {
+		set[word] = struct{}{}
+	}
+	return set, nil
 }
 
 /*
     Removes the hostname and the prefix "/" from a string URL or a file path
 */
 func removeHostname(fullURL string) (string, error) {
-    // Parse the URL
-    parsedURL, err := url.Parse(fullURL)
-    if err != nil {
-        return "", err
-    }
+	// Parse the URL
+	parsedURL, err := url.Parse(fullURL)
+	if err != nil {
+		return "", err
+	}
 
-    // Get the path and trim the leading slash
-    pathAndQuery := strings.TrimPrefix(parsedURL.EscapedPath(), "/")
-    if parsedURL.RawQuery != "" {
-        pathAndQuery += "?" + parsedURL.RawQuery
-    }
+	// Get the path and trim the leading slash
+	pathAndQuery := strings.TrimPrefix(parsedURL.EscapedPath(), "/")
+	if parsedURL.RawQuery != "" {
+		pathAndQuery += "?" + parsedURL.RawQuery
+	}
 
-    return pathAndQuery, nil
+	return pathAndQuery, nil
 }
 
 /*
    This function updates the inverted index by inserting newly found words into the inverted index data structure
 */
-func updateInvertedIndex(invertedIndex map[string]map[string]int, stopwords StopWords, docWordCount map[string]int, words []string, currentURL string) {
-	// record the number of words inside of a particular document
-    docWordCount[currentURL]+=len(words)
+func updateInvertedIndex(idx *InvertedIndex, stopwords StopWords, words []string, currentURL string) {
+	// Record the number of words inside of a particular document
+	idx.docWordCount[currentURL] += len(words)
 
-    // Add the extracted words into the inverted index
-    for _, word := range words {
-        // check if the word is a stop word. If it is a stop word, skip to the next for loop run.
-        if Stop(word, stopwords){
-            continue
-        }
-        // stem the word
-        word, err := snowball.Stem(word, "english", true)
-        if err != nil {
-            fmt.Println(err)
-            continue
-        }
-        urlMap, exists := invertedIndex[word]
-        // If the word does not exist in the inverted index map, 
-        // make a new hashmap and add it to the inverted index with the word as the new map's key
-        if !exists {
-            urlMap = make(map[string]int)
-            invertedIndex[word] = urlMap
-        }
-        // Increment the frequency of the current word in the current URL by 1. 
-        // The one-liner below works because if the current URL doesn't exist as a key, 
-        // it automatically makes a new entry into the hashmap
-        urlMap[currentURL]++
-    }
+	// Add the extracted words into the inverted index
+	for _, word := range words {
+		// Check if the word is a stop word. If it is a stop word, skip to the next for loop run.
+		if Stop(word, stopwords) {
+			continue
+		}
+		// Stem the word
+		stemmedWord, err := snowball.Stem(word, "english", true)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		// Retrieve the urlMap for the stemmed word
+		urlMap, exists := idx.idx[stemmedWord]
+		// If the word does not exist in the inverted index map, make a new hashmap and add it to the inverted index
+		if !exists {
+			urlMap = make(map[string]int)
+			idx.idx[stemmedWord] = urlMap
+		}
+		// Increment the frequency of the current word in the current URL by 1
+		urlMap[currentURL]++
+	}
 }
 
 /*
@@ -106,84 +104,69 @@ func addNewURLsToQueue(hrefs []string, currentURL string, visited map[string]str
 	}
 }
 
-
 /*
-	Crawl(): Given a seed URL, if the URL is a link and not a file path, then download the webpage,
-		extract the words and URLs, and add all cleaned URLs found to a download queue and continue to crawl those URLs.
-		If the seed is a file path, just access the .html data from the file through the os package
+	Crawl(): Given a seed URL, download the webpage, extract the words and URLs,
+	add all cleaned URLs found to a download queue, and continue to crawl those URLs.
+
 	@params: seed is the seed URL string that the method will crawl
-    @returns: The inverted index
-    @returns: A Hashset that contains the number of words in each document inside of the inverted index
-	@returns: []string is the list of URLs that were crawled by the method
-	@returns: error handles errors
+	@returns: error for error handling
 */
+func Crawl(idx *InvertedIndex, seed string) error {
+	stopWords, err := GenerateStopWords()
+	if err != nil {
+		return err
+	}
 
-func Crawl(seed string) (map[string]map[string]int, map[string]int, []string, error) {
-    invertedIndex := make(map[string]map[string]int) // words -> links -> frequency	
-    docWordCount := make(map[string]int)
-    
-    StopWords, err := GenerateStopWords()
-    if(err != nil){
-        return nil, nil, nil, err
-    }
+	queue := []string{seed}
+	// Make a hashset for the queue to speed up look-up times
+	queueSet := make(map[string]struct{})
+	queueSet[seed] = struct{}{}
+	visited := make(map[string]struct{})
 
-    queue := []string{seed}
-    // make a hashset for the queue to speed up look-up times
-    queueSet := make(map[string]struct{})
-    queueSet[seed] = struct{}{}
-    visited := make(map[string]struct{})
+	var currentURL string
+	for len(queue) > 0 {
+		// Remove the current URL from the queue and parse it
+		currentURL = queue[0]
+		queue = queue[1:]
+		delete(queueSet, currentURL)
 
-    var currentURL string
-    for len(queue) > 0 {
-        // Remove the current URL from the queue and parse it
-        currentURL = queue[0]
-        queue = queue[1:]
-        delete(queueSet, currentURL)
+		if currentURL == "" {
+			continue
+		}
 
-        if currentURL == ""{
-            continue
-        }
+		parsedURL, err := url.Parse(currentURL)
+		if err != nil {
+			fmt.Printf("Skipping invalid URL: %s\n", currentURL)
+			continue
+		}
+		currentURL = parsedURL.String()
 
-        parsedURL, err := url.Parse(currentURL)
-        if err != nil{
-            fmt.Printf("Skipping invalid URL: %s\n", currentURL)
-            continue
-        }
-        currentURL = parsedURL.String()
+		// If we've already visited the current URL, skip it.
+		if _, alreadyVisited := visited[currentURL]; alreadyVisited || currentURL == "INVALID HREF" {
+			continue
+		}
 
-        // If we've already visited the current URL, skip it.
-        if _, alreadyVisited := visited[currentURL]; alreadyVisited || currentURL == "INVALID HREF" {
-            continue
-        }
+		extracted, err := Download(currentURL)
+		if err != nil {
+			fmt.Printf("Error downloading URL %s: %v\n", currentURL, err)
+			continue
+		}
+		words, hrefs, err := Extract(extracted)
+		if err != nil {
+			fmt.Printf("Error extracting data from URL %s: %v\n", currentURL, err)
+			continue
+		}
+		hrefs = Clean(currentURL, hrefs)
 
-        extracted, err := Download(currentURL)
-        if err != nil {
-            fmt.Printf("Error downloading URL %s: %v\n", currentURL, err)
-            continue
-        }
-        words, hrefs, err := Extract(extracted)
-        if err != nil {
-            fmt.Printf("Error extracting data from URL %s: %v\n", currentURL, err)
-            continue
-        }
-        hrefs = Clean(currentURL, hrefs)
-       
-        addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
-        // remove the hostname prefix for the current URL
-        currentURL, err := removeHostname(currentURL)
-        if(err != nil){
-            return invertedIndex, nil, nil, err
-        }
-        visited[currentURL] = struct{}{}
-        updateInvertedIndex(invertedIndex, StopWords, docWordCount, words, currentURL)
-    }
+		addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
+		// Remove the hostname prefix for the current URL
+		currentURL, err = removeHostname(currentURL)
+		if err != nil {
+			return err
+		}
+		visited[currentURL] = struct{}{}
+		updateInvertedIndex(idx, stopWords, words, currentURL)
+	}
 
-    // Collect the visited URLs into a slice
-    visitedURLs := make([]string, 0, len(visited))
-    for url := range visited {
-        visitedURLs = append(visitedURLs, url)
-    }
-    return invertedIndex, docWordCount, visitedURLs, nil
+	return nil
 }
-
-

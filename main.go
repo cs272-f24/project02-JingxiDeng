@@ -1,34 +1,27 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"net/url"
-	"path"
+	"time"
 )
 
-func main(){
-	// I can serve a file as html content
-	http.Handle("/", http.FileServer(http.Dir("static")))
-	// I can serve a function as html server content
-	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request){
-		searchTerm := r.URL.Query().Get("searchword")
-		server := MockServerHandler()
-		defer server.Close()
+type freq map[string]int
 
-		// find the search result
-		actual, err := TfIdf(searchTerm, server.URL + path.Join("/", "top10/index.html"))
-		if err != nil{
-			fmt.Println("ERROR with search")
-		}
-		// Un-decode the actual URL
-		actual, err = url.PathUnescape(actual)
-		if err != nil {
-			fmt.Printf("ERROR: Failed to decode actual result: %v\n", err)
-		}
+// InvertedIndex holds the index and document word counts
+type InvertedIndex struct {
+	idx          map[string]freq
+	docWordCount map[string]int
+}
 
-		// display the search result
-		w.Write([]byte("Most relevant document is: " + actual))
-	})
-	http.ListenAndServe(":8080", nil)
+func main() {
+	idx := &InvertedIndex{
+		idx:          make(map[string]freq),
+		docWordCount: make(map[string]int),
+	}
+
+	go Crawl(idx, "http://localhost:8080/top10/index.html")
+	go Serve(idx)
+	
+	for {
+		time.Sleep(100)
+	}
 }
