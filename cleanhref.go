@@ -77,7 +77,7 @@ func Clean(host string, hrefs []string) []string {
 	}
 
 	for _, href := range hrefs {
-		if href == "INVALID HREF" || href[0] == '#' || filepath.Ext(href) != ".html"{
+		if href == "INVALID HREF" || href[0] == '#'{
 			continue
 		}
 		// check if the URL contains invalid characters
@@ -107,7 +107,11 @@ func Clean(host string, hrefs []string) []string {
 			}
 			continue
 		}
+
 		
+		if filepath.Ext(href) != ".html"{
+			continue
+		}
 		// if the href is a partial url, match it with the host
 		mergedURL := baseHostOnly.ResolveReference(hrefURL)
 		// add the resolved, cleaned URL to the list
