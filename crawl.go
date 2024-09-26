@@ -112,6 +112,7 @@ func addNewURLsToQueue(hrefs []string, currentURL string, visited map[string]str
 	@returns: error for error handling
 */
 func Crawl(idx *InvertedIndex, seed string) error {
+    fmt.Println("Crawling: ", seed)
 	stopWords, err := GenerateStopWords()
 	if err != nil {
 		return err
@@ -157,6 +158,7 @@ func Crawl(idx *InvertedIndex, seed string) error {
 			continue
 		}
 		hrefs = Clean(currentURL, hrefs)
+        fmt.Println(hrefs)
 
 		addNewURLsToQueue(hrefs, currentURL, visited, &queue, &queueSet)
 		// Remove the hostname prefix for the current URL

@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
@@ -76,7 +77,7 @@ func Clean(host string, hrefs []string) []string {
 	}
 
 	for _, href := range hrefs {
-		if href == "INVALID HREF"{
+		if href == "INVALID HREF" || href[0] == '#' || filepath.Ext(href) != ".html"{
 			continue
 		}
 		// check if the URL contains invalid characters
