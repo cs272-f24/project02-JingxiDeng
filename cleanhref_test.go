@@ -15,8 +15,8 @@ func TestCleanHref(t *testing.T){
 		{
 			name: "General Case",
 			hostname: "https://myusfca.usfca.edu/",
-			hrefs: []string{"/", "/dashboard/", "/dashboard/compsci/", "/arts-sciences/", "https://ddsamuel.com/"},
-			want: []string{"https://myusfca.usfca.edu/", "https://myusfca.usfca.edu/dashboard/", "https://myusfca.usfca.edu/dashboard/compsci/", "https://myusfca.usfca.edu/arts-sciences/", "INVALID HREF"},
+			hrefs: []string{"/top10/index.html", "/dashboard.html", "/dashboard/compsci.html", "/arts-science.html", "https://ddsamuel.com/"},
+			want: []string{"https://myusfca.usfca.edu/top10/index.html", "https://myusfca.usfca.edu/dashboard.html", "https://myusfca.usfca.edu/dashboard/compsci.html", "https://myusfca.usfca.edu/arts-science.html", "INVALID HREF"},
 		},
 	}
 

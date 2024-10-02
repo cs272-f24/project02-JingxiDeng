@@ -62,10 +62,22 @@ func TestCrawl(t *testing.T){
 				expectedURLs[i] = p
 			}
 
+			// Initialize the inverted index
+			idx := &InvertedIndex{
+				idx:          make(map[string]freq),
+				docWordCount: make(map[string]int),
+			}
+
 			// adding the mock server's url to the url provided in the test case
-			_, _, actual, err := Crawl(server.URL + "/" + test.seed)
+			err := Crawl(idx, server.URL + "/" + test.seed)
 			if err != nil {
 				t.Errorf("ERROR: Crawl() returned %v\n", err)
+			}
+
+			// generate actual results
+			var actual []string
+			for doc := range idx.docWordCount {
+				actual = append(actual, doc)
 			}
 			
 			if !arraysAreEqual(expectedURLs, actual) {
